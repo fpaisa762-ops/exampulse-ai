@@ -1,294 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ExamPulse AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #050505;
-      color: white;
-    }
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
-    }
-    .card {
-      background: #111;
-      border: 1px solid #333;
-      border-radius: 18px;
-      padding: 18px;
-      margin-bottom: 18px;
-    }
-    h1 { margin-bottom: 5px; }
-    input, select, textarea {
-      width: 100%;
-      padding: 13px;
-      margin: 8px 0;
-      border-radius: 12px;
-      border: 1px solid #444;
-      background: #000;
-      color: white;
-      font-size: 15px;
-    }
-    button {
-      padding: 13px 18px;
-      border: none;
-      border-radius: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      margin: 6px 4px;
-    }
-    .primary { background: white; color: black; }
-    .secondary { background: #222; color: white; border: 1px solid #555; }
-    .danger { background: #6b1111; color: white; }
-    .option {
-      display: block;
-      width: 100%;
-      text-align: left;
-      background: #000;
-      color: white;
-      border: 1px solid #444;
-      padding: 14px;
-      border-radius: 12px;
-      margin: 8px 0;
-    }
-    .option.selected { border-color: white; background: #222; }
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .badge {
-      background: #220b0b;
-      color: #ff7777;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-weight: bold;
-    }
-    .hidden { display: none; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-      gap: 10px;
-    }
-    .small-card {
-      background: #000;
-      border: 1px solid #333;
-      border-radius: 14px;
-      padding: 12px;
-      text-align: center;
-    }
-    .muted { color: #aaa; }
+    body{font-family:Arial;background:#070707;color:white;text-align:center;padding:20px}
+    textarea,input,button{width:95%;max-width:700px;padding:12px;margin:8px;border-radius:10px;border:0}
+    textarea{height:160px}
+    button{background:#00ff88;font-weight:bold;cursor:pointer}
+    .box{background:#151515;padding:15px;border-radius:15px;margin:15px auto;max-width:800px;text-align:left}
+    .q{border-bottom:1px solid #333;padding:12px}
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <h1>ExamPulse AI 🚀</h1>
-      <p class="muted">YouTube Lecture → MCQ Test Generator</p>
-    </div>
 
-    <div id="setup" class="card">
-      <h2>Generate Test</h2>
-      <input id="ytLink" placeholder="Paste YouTube lecture link here" />
+<h1>ExamPulse AI 🚀</h1>
+<p>YouTube Lecture / Notes se MCQ + PYQ Style Questions</p>
 
-      <select id="exam">
-        <option>UPSC</option>
-        <option>SSC</option>
-        <option>NEET</option>
-        <option>JEE</option>
-        <option>CUET</option>
-        <option>CBSE</option>
-      </select>
+<input id="yt" placeholder="YouTube lecture link paste karo">
+<textarea id="notes" placeholder="Lecture ka transcript/notes/topic paste karo. Example: South America world mapping..."></textarea>
 
-      <select id="language">
-        <option value="en">English</option>
-        <option value="hi">Hindi</option>
-      </select>
+<select id="count">
+  <option value="5">5 Questions</option>
+  <option value="10">10 Questions</option>
+  <option value="20">20 Questions</option>
+</select>
 
-      <textarea id="lectureText" rows="6" placeholder="Optional: paste lecture notes/transcript here for better demo questions"></textarea>
+<button onclick="generateMCQ()">Generate MCQ</button>
 
-      <button class="primary" onclick="generateQuestions()">Generate MCQs</button>
-      <p class="muted">Note: This is an upgraded static version. Real YouTube transcript + real AI needs backend/API connection.</p>
-    </div>
-
-    <div id="examBox" class="card hidden">
-      <div class="topbar">
-        <h2>Live CBT Exam Mode</h2>
-        <span class="badge" id="timer">10:00</span>
-      </div>
-
-      <p class="muted" id="qCount"></p>
-      <h3 id="question"></h3>
-      <div id="options"></div>
-
-      <button class="secondary" onclick="prevQuestion()">Previous</button>
-      <button class="secondary" onclick="nextQuestion()">Save & Next</button>
-      <button class="danger" onclick="submitTest()">Submit Test</button>
-    </div>
-
-    <div id="resultBox" class="card hidden">
-      <h2>Result & Analytics</h2>
-      <div class="grid">
-        <div class="small-card"><h2 id="score">0</h2><p>Score</p></div>
-        <div class="small-card"><h2 id="correct">0</h2><p>Correct</p></div>
-        <div class="small-card"><h2 id="wrong">0</h2><p>Wrong</p></div>
-        <div class="small-card"><h2 id="accuracy">0%</h2><p>Accuracy</p></div>
-      </div>
-      <h3>AI Suggestion</h3>
-      <p id="suggestion"></p>
-      <button class="primary" onclick="location.reload()">Create New Test</button>
-    </div>
-  </div>
+<div id="output" class="box"></div>
 
 <script>
 const API_KEY = "AQ.Ab8RN6Lqjo08qk0BE9fZDOvwXSGPNPLSUP_oIZp2u48Of5AWjw";
-let questions = [];
-let current = 0;
-let answers = [];
-let timeLeft = 600;
-let timerInterval;
 
-const bank = {
-  en: [
-    {
-      q: "Which layer of the atmosphere contains the ozone layer?",
-      options: ["Troposphere", "Stratosphere", "Mesosphere", "Thermosphere"],
-      answer: 1,
-      exp: "The ozone layer is mainly found in the stratosphere."
-    },
-    {
-      q: "Which type of questions are common in competitive exams?",
-      options: ["Only story based", "Concept and fact based", "Only drawing based", "Only essay based"],
-      answer: 1,
-      exp: "Competitive exams often ask concept, fact, and application-based MCQs."
-    },
-    {
-      q: "What is the best way to revise a lecture?",
-      options: ["Ignore notes", "Make MCQs and short notes", "Only watch reels", "Skip practice"],
-      answer: 1,
-      exp: "MCQs and short notes improve recall and exam readiness."
-    },
-    {
-      q: "What does PYQ stand for?",
-      options: ["Previous Year Question", "Private Year Quiz", "Public Youth Query", "Past Youth Quality"],
-      answer: 0,
-      exp: "PYQ means Previous Year Question."
-    },
-    {
-      q: "In a CBT exam, what is the timer used for?",
-      options: ["Decoration", "Time management", "Music", "Brightness"],
-      answer: 1,
-      exp: "Timer helps simulate real exam conditions."
+async function generateMCQ() {
+  const yt = document.getElementById("yt").value;
+  const notes = document.getElementById("notes").value;
+  const count = document.getElementById("count").value;
+  const output = document.getElementById("output");
+
+  if (!notes.trim()) {
+    output.innerHTML = "Please lecture notes/transcript/topic paste karo.";
+    return;
+  }
+
+  output.innerHTML = "Generating questions...";
+
+  const prompt = `
+You are an exam expert.
+Make ${count} MCQ questions from this lecture content.
+
+YouTube link: ${yt}
+Lecture content:
+${notes}
+
+Rules:
+- Make questions exam-oriented
+- Include PYQ-style questions
+- Give 4 options A, B, C, D
+- Mark correct answer
+- Give short explanation
+- Use Hindi + English mixed language
+- Format clearly
+`;
+
+  try {
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + API_KEY,
+      {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    if (data.error) {
+      output.innerHTML = "API Error: " + data.error.message;
+      return;
     }
-  ],
-  hi: [
-    {
-      q: "ओज़ोन परत वायुमंडल की किस परत में पाई जाती है?",
-      options: ["क्षोभमंडल", "समतापमंडल", "मध्यमंडल", "तापमंडल"],
-      answer: 1,
-      exp: "ओज़ोन परत मुख्य रूप से समतापमंडल में पाई जाती है।"
-    },
-    {
-      q: "PYQ का मतलब क्या होता है?",
-      options: ["Previous Year Question", "Private Year Quiz", "Public Youth Query", "Past Year Quality"],
-      answer: 0,
-      exp: "PYQ का मतलब Previous Year Question होता है।"
-    },
-    {
-      q: "Lecture revise करने का अच्छा तरीका क्या है?",
-      options: ["Notes और MCQ बनाना", "Practice छोड़ देना", "सिर्फ वीडियो देखना", "कुछ नहीं करना"],
-      answer: 0,
-      exp: "Notes और MCQ से revision मजबूत होता है।"
-    },
-    {
-      q: "CBT exam में timer क्यों होता है?",
-      options: ["Decoration के लिए", "Time management के लिए", "Music के लिए", "Color बदलने के लिए"],
-      answer: 1,
-      exp: "Timer real exam जैसा environment देता है।"
-    },
-    {
-      q: "Competitive exams में questions ज्यादातर कैसे होते हैं?",
-      options: ["Concept based", "सिर्फ drawing", "सिर्फ poem", "सिर्फ story"],
-      answer: 0,
-      exp: "Competitive exams में concept और fact based questions आते हैं।"
-    }
-  ]
-};
 
-function generateQuestions() {
-  const lang = document.getElementById("language").value;
-  questions = [...bank[lang]];
-  answers = new Array(questions.length).fill(null);
-  current = 0;
-  document.getElementById("setup").classList.add("hidden");
-  document.getElementById("examBox").classList.remove("hidden");
-  startTimer();
-  renderQuestion();
-}
+    const text = data.candidates[0].content.parts[0].text;
+    output.innerHTML = text.replace(/\n/g, "<br>");
 
-function renderQuestion() {
-  const q = questions[current];
-  document.getElementById("qCount").innerText = `Question ${current + 1} of ${questions.length}`;
-  document.getElementById("question").innerText = q.q;
-  const box = document.getElementById("options");
-  box.innerHTML = "";
-  q.options.forEach((opt, i) => {
-    const btn = document.createElement("button");
-    btn.className = "option" + (answers[current] === i ? " selected" : "");
-    btn.innerText = String.fromCharCode(65 + i) + ". " + opt;
-    btn.onclick = () => { answers[current] = i; renderQuestion(); };
-    box.appendChild(btn);
-  });
-}
-
-function nextQuestion() {
-  if (current < questions.length - 1) current++;
-  renderQuestion();
-}
-
-function prevQuestion() {
-  if (current > 0) current--;
-  renderQuestion();
-}
-
-function startTimer() {
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    let m = Math.floor(timeLeft / 60);
-    let s = timeLeft % 60;
-    document.getElementById("timer").innerText = `${m}:${String(s).padStart(2, "0")}`;
-    if (timeLeft <= 0) submitTest();
-  }, 1000);
-}
-
-function submitTest() {
-  clearInterval(timerInterval);
-  let correct = 0, wrong = 0;
-  questions.forEach((q, i) => {
-    if (answers[i] === q.answer) correct++;
-    else wrong++;
-  });
-  const score = correct * 4 - wrong;
-  const acc = Math.round((correct / questions.length) * 100);
-  document.getElementById("examBox").classList.add("hidden");
-  document.getElementById("resultBox").classList.remove("hidden");
-  document.getElementById("score").innerText = score;
-  document.getElementById("correct").innerText = correct;
-  document.getElementById("wrong").innerText = wrong;
-  document.getElementById("accuracy").innerText = acc + "%";
-  document.getElementById("suggestion").innerText =
-    acc >= 80 ? "Excellent! Keep practicing PYQs." :
-    acc >= 50 ? "Good, but revise weak concepts again." :
-    "You need more revision. Watch the lecture again and attempt another test.";
+  } catch (err) {
+    output.innerHTML = "Error: " + err.message;
+  }
 }
 </script>
+
 </body>
 </html>
